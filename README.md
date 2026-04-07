@@ -4,10 +4,13 @@ An interactive browser-based game built with Phaser 3 to help developers and stu
 
 ---
 
-## 📌 Overview
-HTTP Status Game transforms traditional learning into an interactive experience. Players navigate through challenges that simulate real-world HTTP responses such as **200 OK**, **404 Not Found**, and **500 Internal Server Error**.
+## 🌐 Live Demo
+https://http-status-game.vercel.app/
 
 ---
+
+## 📌 Overview
+HTTP Status Game transforms traditional learning into an interactive experience. Players navigate through challenges that simulate real-world HTTP responses such as **200 OK**, **404 Not Found**, and **500 Internal Server Error**.
 
 ## ✨ Features
 - 🎮 Interactive gameplay powered by Phaser 3  
