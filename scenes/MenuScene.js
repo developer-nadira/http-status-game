@@ -18,21 +18,33 @@ export default class MenuScene extends Phaser.Scene {
         graphics.fillGradientStyle(colorTop, colorTop, colorBottom, colorBottom, 1);
         graphics.fillRect(0, 0, width, height);
 
-        // ✨ Particle background
-        const particles = this.add.particles(0, 0, "white", {
-            x: { min: 0, max: width },
+        // 🔵 Data flow
+        this.add.particles(0, 0, "white", {
+            x: 0,
             y: { min: 0, max: height },
-            speedY: { min: 20, max: 60 },
-            speedX: { min: -10, max: 10 },
-            scale: { start: 0.3, end: 0 },
-            alpha: { start: 0.6, end: 0 },
-            lifespan: 4000,
-            quantity: 2,
-            blendMode: "ADD"
-        });
+            speedX: { min: 80, max: 120 },
+            scale: { start: 0.1, end: 0 },
+            alpha: { start: 0.5, end: 0 },
+            lifespan: 3000,
+            quantity: 0.7,
+            frequency: 80,
+            tint: 0x38bdf8
+        }).setDepth(0);
 
-        particles.setDepth(-1);
+        // 💚 Depth layer
+        this.add.particles(0, 0, "white", {
+            x: width,
+            y: { min: 0, max: height },
+            speedX: { min: -60, max: -100 },
+            scale: { start: 0.1, end: 0 },
+            alpha: { start: 0.5, end: 0 },
+            lifespan: 4000,
+            quantity: 0.4,
+            frequency: 120,
+            tint: 0x22c55e
+        }).setDepth(0);
     }
+
 
     create() {
 

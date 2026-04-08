@@ -28,14 +28,14 @@ export default class ResultScene extends Phaser.Scene {
             y: { min: 0, max: height },
             speedY: { min: 20, max: 60 },
             speedX: { min: -10, max: 10 },
-            scale: { start: 0.3, end: 0 },
+            scale: { start: 0.05, end: 0 },
             alpha: { start: 0.6, end: 0 },
             lifespan: 4000,
             quantity: 2,
             blendMode: "ADD"
         });
 
-        particles.setDepth(-1);
+        particles.setDepth(0);
     }
 
     create() {

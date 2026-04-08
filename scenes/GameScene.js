@@ -5,82 +5,69 @@ export default class GameScene extends Phaser.Scene {
         super("GameScene");
     }
 
+
+    preload() {
+        this.load.image("white", "https://labs.phaser.io/assets/particles/white.png");
+    }
+
     createBackground() {
         const width = this.scale.width;
         const height = this.scale.height;
 
-        // 🌌 Gradient background (top → bottom)
+        // 🌌 Gradient
         const graphics = this.add.graphics();
-
-        const colorTop = 0x020617;
-        const colorBottom = 0x0f172a;
-
-        graphics.fillGradientStyle(colorTop, colorTop, colorBottom, colorBottom, 1);
+        graphics.fillGradientStyle(0x020617, 0x020617, 0x0f172a, 0x0f172a, 1);
         graphics.fillRect(0, 0, width, height);
 
-        // ✨ Particle background
-        const particles = this.add.particles(0, 0, "white", {
-            x: { min: 0, max: width },
+        // 🔵 Data flow
+        this.add.particles(0, 0, "white", {
+            x: 0,
             y: { min: 0, max: height },
-            speedY: { min: 20, max: 60 },
-            speedX: { min: -10, max: 10 },
-            scale: { start: 0.3, end: 0 },
-            alpha: { start: 0.6, end: 0 },
-            lifespan: 4000,
-            quantity: 2,
-            blendMode: "ADD"
-        });
+            speedX: { min: 80, max: 120 },
+            scale: { start: 0.1, end: 0 },
+            alpha: { start: 0.5, end: 0 },
+            lifespan: 3000,
+            quantity: 0.7,
+            frequency: 80,
+            tint: 0x38bdf8
+        }).setDepth(0);
 
-        particles.setDepth(-1);
-        this.add.circle(this.centerX, this.centerY, 300, 0x38bdf8, 0.05);
+        // 💚 Depth layer
+        this.add.particles(0, 0, "white", {
+            x: width,
+            y: { min: 0, max: height },
+            speedX: { min: -60, max: -100 },
+            scale: { start: 0.1, end: 0 },
+            alpha: { start: 0.5, end: 0 },
+            lifespan: 4000,
+            quantity: 0.4,
+            frequency: 120,
+            tint: 0x22c55e
+        }).setDepth(0);
     }
 
     create() {
 
-        this.createBackground();
-        // 📱 Responsive base
+        this.scale.on("resize", () => {
+            this.scene.restart();
+        });
+
         this.width = this.scale.width;
         this.height = this.scale.height;
         this.centerX = this.width / 2;
         this.centerY = this.height / 2;
 
-        // 🎯 Device type
-        this.device = this.width < 500 ? "mobile" :
-            this.width < 900 ? "tablet" : "desktop";
+        this.device =
+            this.width < 500 ? "mobile" :
+                this.width < 900 ? "tablet" : "desktop";
 
-        // 🎨 Background
-        this.cameras.main.setBackgroundColor("#020617");
+        this.answered = false;
 
-        // 💯 Score
-        this.score = 0;
-        this.scoreText = this.add.text(20, 20, "Score: 0", {
-            fontSize: this.device === "mobile" ? "16px" : "20px",
-            color: "#ffffff"
-        });
+        this.createBackground();
 
-        // 🧠 Questions
-        this.questions = [
-            { text: "Page Not Found", answer: "404" },
-            { text: "Success", answer: "200" },
-            { text: "Server Error", answer: "500" },
-            { text: "Unauthorized Access", answer: "401" },
-            { text: "Forbidden", answer: "403" },
-            { text: "Bad Request", answer: "400" },
-            { text: "Created Successfully", answer: "201" },
-            { text: "No Content", answer: "204" },
-            { text: "Gateway Timeout", answer: "504" },
-            { text: "Service Unavailable", answer: "503" }
-        ];
-
-        this.currentIndex = 0;
-
-        // 💎 Panel
-        let panelWidth = this.device === "mobile" ? this.width * 0.85 :
-            this.device === "tablet" ? this.width * 0.8 :
-                this.width * 0.6;
-
-        let panelHeight = this.device === "mobile" ? this.height * 0.85 :
-            this.height * 0.7;
+        // 🟦 PANEL (fixed)
+        const panelWidth = this.device === "mobile" ? this.width * 0.9 : this.width * 0.6;
+        const panelHeight = this.device === "mobile" ? this.height * 0.6 : this.height * 0.5;
 
         this.panel = this.add.rectangle(
             this.centerX,
@@ -89,59 +76,63 @@ export default class GameScene extends Phaser.Scene {
             panelHeight,
             0x020617,
             0.9
-        ).setStrokeStyle(2, 0x38bdf8);
+        ).setStrokeStyle(2, 0x38bdf8).setDepth(1);
 
-        // 🧾 Question
-        let fontSize = this.device === "mobile" ? "20px" :
-            this.device === "tablet" ? "24px" : "28px";
 
-        // ✅ Create text FIRST
-        this.question = this.add.text(
-            this.centerX,
-            this.centerY - panelHeight / 2 + 70,
-            "",
-            {
-                fontSize: fontSize,
-                color: "#38bdf8",
-                align: "center",
-                wordWrap: { width: panelWidth * 0.8 }
-            }
-        ).setOrigin(0.5);
+        // 💯 Score
+        this.questions = [
+            { text: "Page Not Found", answer: "404" },
+            { text: "Success", answer: "200" },
+            { text: "Server Error", answer: "500" },
+            { text: "Unauthorized Access", answer: "401" }
+        ];
 
-        // ✅ THEN apply animation
-        this.tweens.add({
-            targets: this.question,
-            alpha: { from: 1, to: 0.6 },
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut"
-        });
+        this.score = 0;
+        this.totalScore = this.questions.length * 10;
 
-        // 📦 Drop Zone
-        const dropW = this.device === "mobile" ? 160 : 220;
-        const dropH = this.device === "mobile" ? 80 : 110;
+        this.scoreText = this.add.text(20, 20, `Score: 0 / ${this.totalScore}`, {
+            fontSize: "20px",
+            color: "#ffffff"
+        }).setDepth(1);
+
+        this.currentIndex = 0;
+
+        // 🧠 Question
+        const topOffset = this.device === "mobile" ? 120 : 180;
+
+        this.question = this.add.text(this.centerX, this.centerY - topOffset, "", {
+            fontSize:
+                this.device === "mobile" ? "20px" :
+                    this.device === "tablet" ? "28px" : "36px",
+            color: "#38bdf8",
+            fontStyle: "bold"
+
+
+        }).setOrigin(0.5).setDepth(1);
+
+        // 🎯 Drop zone
+        const dropW = this.device === "mobile" ? 160 : 260;
+        const dropH = this.device === "mobile" ? 80 : 130;
 
         this.dropZone = this.add.zone(
             this.centerX,
-            this.centerY - 40,
+            this.centerY,
             dropW,
             dropH
-        ).setRectangleDropZone(dropW, dropH);
+        ).setRectangleDropZone(dropW, dropH).setDepth(1);
 
         this.dropBox = this.add.rectangle(
             this.centerX,
-            this.centerY - 40,
+            this.centerY,
             dropW,
             dropH
-        ).setStrokeStyle(2, 0x22c55e);
+        ).setStrokeStyle(2, 0x22c55e).setDepth(1);
 
-        this.add.text(this.centerX, this.centerY - 40, "DROP HERE", {
-            fontSize: this.device === "mobile" ? "14px" : "18px",
+        this.add.text(this.centerX, this.centerY, "DROP HERE", {
+            fontSize: this.device === "mobile" ? "14px" : "20px",
             color: "#22c55e"
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(2);
 
-        // Load first
         this.loadQuestion();
 
         // 🎮 Drag
@@ -150,50 +141,131 @@ export default class GameScene extends Phaser.Scene {
             obj.y = y;
         });
 
-        this.input.on("drop", (pointer, obj, target) => {
-            if (target === this.dropZone) {
-                this.checkAnswer(obj);
+        // 🎮 Drop
+        this.input.on("drop", (pointer, gameObject) => {
+            if (this.answered) return;
+
+            this.answered = true;
+
+            if (gameObject.getData("correct")) {
+                this.handleCorrect(gameObject);
+            } else {
+                this.handleWrong(gameObject);
             }
         });
 
         this.input.on("dragend", (pointer, obj, dropped) => {
-            if (!dropped) {
+            if (!dropped && !this.answered) {
                 obj.x = obj.startX;
                 obj.y = obj.startY;
             }
         });
 
-        // 🔄 Resize
-        this.scale.on("resize", () => {
-            this.scene.restart();
+        // 🎮 Drag start (ONLY ONCE)
+        this.input.on("dragstart", (pointer, obj) => {
+            this.tweens.killTweensOf(obj);
+
+            this.tweens.add({
+                targets: obj,
+                scale: 1.1,
+                duration: 120,
+                ease: "power1.out"
+            });
+        });
+
+        // 🎮 Drag end (ONLY ONCE)
+        this.input.on("dragend", (pointer, obj) => {
+            this.tweens.killTweensOf(obj);
+
+            this.tweens.add({
+                targets: obj,
+                scale: 1,
+                duration: 120,
+                ease: "power1.out"
+            });
         });
     }
 
-    // 🔄 Load question
+    // 🔄 Next
+    nextQuestion() {
+        this.answered = false;
+        this.currentIndex++;
+
+        if (this.currentIndex < this.questions.length) {
+            this.loadQuestion();
+        } else {
+            this.scene.start("ResultScene", { score: this.score });
+        }
+    }
+
+    // ✅ Correct
+    handleCorrect(obj) {
+        obj.setTint(0x22c55e);
+
+        this.tweens.add({
+            targets: obj,
+            scale: 1.2,
+            duration: 200,
+            yoyo: true
+        });
+
+        this.score += 10;
+        this.updateScoreUI();
+
+        this.time.delayedCall(800, () => this.nextQuestion());
+
+        this.draggables.forEach(obj => {
+            obj.disableInteractive(); // ✅ stops hover + drag
+        });
+    }
+
+    updateScoreUI() {
+        const percent = Math.floor((this.score / this.totalScore) * 100);
+        this.scoreText.setText(`Score: ${this.score}/${this.totalScore} (${percent}%)`);
+    }
+
+    // ❌ Wrong
+    handleWrong(obj) {
+        obj.setTint(0xef4444);
+
+        this.tweens.add({
+            targets: obj,
+            x: obj.x + 10,
+            duration: 50,
+            yoyo: true,
+            repeat: 3
+        });
+
+        this.showCorrectAnswer();
+
+        this.time.delayedCall(1000, () => this.nextQuestion());
+
+        this.draggables.forEach(obj => {
+            obj.disableInteractive(); // ✅ stops hover + drag
+        });
+    }
+
+    showCorrectAnswer() {
+        const correct = this.questions[this.currentIndex].answer;
+
+        this.draggables.forEach(opt => {
+            if (opt.code === correct) {
+                opt.setTint(0x22c55e);
+            }
+        });
+    }
+
     loadQuestion() {
         const q = this.questions[this.currentIndex];
         this.question.setText(q.text);
 
-        if (this.feedbackText) {
-            this.feedbackText.destroy();
-        }
-
         this.createDraggables();
-
-        // ✨ animation
-        this.tweens.add({
-            targets: this.question,
-            alpha: 0,
-            duration: 150,
-            yoyo: true
-        });
     }
 
-    // 🎯 Options
     createDraggables() {
         const correct = this.questions[this.currentIndex].answer;
 
-        const all = ["200", "201", "204", "400", "401", "403", "404", "500", "503", "504"];
+        const all = ["200", "201", "204", "400", "401", "403", "404", "500"];
         const wrong = all.filter(c => c !== correct);
 
         Phaser.Utils.Array.Shuffle(wrong);
@@ -206,97 +278,61 @@ export default class GameScene extends Phaser.Scene {
             this.draggables.forEach(d => d.destroy());
         }
 
-        // 📐 Grid layout
-        const cols = this.device === "mobile" ? 2 :
-            this.device === "tablet" ? 3 : 4;
-
-        // const spacingX = this.width / (cols + 1);
-        // const spacingY = 70;
+        const spacing = this.device === "mobile" ? 70 : 120;
 
         this.draggables = selected.map((code, i) => {
-            let col = i % cols;
-            let row = Math.floor(i / cols);
-
-            // let x = spacingX * (col + 1);
-            // let y = this.centerY + 120 + row * spacingY;
-
-            // const obj = this.add.text(x, y, code, {
-            //     fontSize: this.device === "mobile" ? "18px" : "22px",
-            //     backgroundColor: "#334155",
-            //     padding: { x: 16, y: 10 },
-            //     color: "#ffffff"
-            // })
-            //     .setOrigin(0.5)
-            //     .setInteractive();
-
-            const spacing = this.device === "mobile" ? 70 : 120;
-
             const x = this.centerX - spacing * 1.5 + i * spacing;
-            const y = this.centerY + 100;
+            const y = this.centerY + (this.device === "mobile" ? 120 : 180);
 
             const obj = this.add.text(x, y, code, {
-                fontSize: "24px",
+                fontSize: this.device === "mobile" ? "18px" : "26px",
                 backgroundColor: "#1e293b",
                 padding: { x: 16, y: 10 },
                 color: "#ffffff"
-            }).setOrigin(0.5).setInteractive();
+            })
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true }) // ✅ pointer cursor
+                .setDepth(2);
+
+            // 🖱️ HOVER IN
+            obj.on("pointerover", () => {
+
+                if (obj.input.dragState !== 0) return; // 🚫 skip if dragging
+                obj.setStyle({ backgroundColor: "#334155" });
+                obj.setTint(0x38bdf8);
+
+                this.tweens.killTweensOf(obj); // ✅ ADD THIS
+
+                this.tweens.add({
+                    targets: obj,
+                    scale: 1.05,
+                    duration: 100
+                });
+            });
+
+            // 🖱️ HOVER OUT
+            obj.on("pointerout", () => {
+                obj.setStyle({ backgroundColor: "#1e293b" });
+                obj.clearTint();
+                this.tweens.killTweensOf(obj); // ✅ ADD
+
+                this.tweens.add({
+                    targets: obj,
+                    scale: 1,
+                    duration: 100
+                });
+            });
+
 
             obj.code = code;
-            obj.startX = obj.x;
-            obj.startY = obj.y;
+            obj.startX = x;
+            obj.startY = y;
 
-            // ✨ hover
-            obj.on("pointerover", () => obj.setStyle({ backgroundColor: "#334155" }));
-            obj.on("pointerout", () => obj.setStyle({ backgroundColor: "#1e293b" }));
+            obj.setData("correct", code === correct);
 
             this.input.setDraggable(obj);
 
             return obj;
         });
-    }
-
-    // ✅ Check answer
-    checkAnswer(obj) {
-        const correct = this.questions[this.currentIndex].answer;
-
-        if (this.feedbackText) this.feedbackText.destroy();
-
-        if (obj.code === correct) {
-            this.score++;
-            this.scoreText.setText("Score: " + this.score);
-
-            this.feedbackText = this.add.text(this.centerX, this.centerY + 40, "Correct!", {
-                fontSize: "26px",
-                color: "#22c55e"
-            }).setOrigin(0.5);
-
-            this.currentIndex++;
-
-            if (this.currentIndex < this.questions.length) {
-                this.time.delayedCall(700, () => this.loadQuestion());
-            } else {
-                this.time.delayedCall(800, () => {
-                    this.scene.start("ResultScene", { score: this.score });
-                });
-            }
-
-        } else {
-            this.feedbackText = this.add.text(this.centerX, this.centerY + 40, "Wrong!", {
-                fontSize: "26px",
-                color: "#ef4444"
-            }).setOrigin(0.5);
-
-            // ❌ shake
-            this.tweens.add({
-                targets: obj,
-                x: obj.x + 10,
-                yoyo: true,
-                repeat: 3,
-                duration: 50
-            });
-
-            obj.x = obj.startX;
-            obj.y = obj.startY;
-        }
     }
 }
