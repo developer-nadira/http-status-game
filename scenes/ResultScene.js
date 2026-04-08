@@ -65,7 +65,7 @@ export default class ResultScene extends Phaser.Scene {
         // 🎉 Title
         const title = this.add.text(centerX, centerY - 120, "Game Over", {
             fontSize: device === "mobile" ? "24px" : "32px",
-            color: "#e2e8f0",
+            color: "#ffffff",
             fontStyle: "bold"
         }).setOrigin(0.5);
 

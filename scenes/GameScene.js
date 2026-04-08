@@ -55,7 +55,7 @@ export default class GameScene extends Phaser.Scene {
         this.score = 0;
         this.scoreText = this.add.text(20, 20, "Score: 0", {
             fontSize: this.device === "mobile" ? "16px" : "20px",
-            color: "#94a3b8"
+            color: "#ffffff"
         });
 
         // 🧠 Questions
